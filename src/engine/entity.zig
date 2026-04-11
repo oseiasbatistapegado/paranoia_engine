@@ -1,7 +1,7 @@
-const std = @import("std");
-const zmath = @import("zmath");
 const anim = @import("animation.zig");
 const physic = @import("physics.zig");
+const zmath = @import("zmath");
+const std = @import("std");
 
 pub const Entity = struct {
     physix: physic.Physics,

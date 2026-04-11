@@ -80,7 +80,7 @@ pub fn main() !void {
 
     const inv_vh = 1.0 / camera.viewport_height;
 
-    for (0..998) |_| {
+    for (0..50) |_| {
         const rand_x = (random.float(f32) * 2.0 - 1.0) * camera.viewport_width;
 
         const rand_y = (random.float(f32) * 2.0 - 1.0) * camera.viewport_height;

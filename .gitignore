@@ -1,0 +1,4 @@
+assets
+.direnv
+.zig-cache
+zig-out

@@ -85,7 +85,7 @@ pub const Renderer2D = struct {
         self.instance_count = 0;
     }
 
-    pub fn drawEntity(self: *Renderer2D, entity: engine.entity.Entity, vh: f32) void {
+    pub fn drawEntity(self: *Renderer2D, entity: engine.ecs.entity.Entity, vh: f32) void {
         if (self.instance_count >= self.max_instances) return;
 
         const config = entity.config;

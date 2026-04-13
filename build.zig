@@ -52,6 +52,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    engine.addImport("engine", engine);
     engine.addImport("core", core);
     engine.addImport("zmath", zmath.module("root"));
     exe.root_module.addImport("engine", engine);

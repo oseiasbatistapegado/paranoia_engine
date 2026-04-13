@@ -41,10 +41,10 @@ pub fn main() !void {
 
     var staging = try gc.beginStaging(frame_manager.pool);
 
-    const orc_tex = try asset_manager.loadTexture(&gc, &staging, engine.animation.ORC_CONFIG.texture_path);
+    const orc_tex = try asset_manager.loadTexture(&gc, &staging, engine.components.animation.ORC_CONFIG.texture_path);
     const orc_tex_id = renderer2d.registerTexture(&gc, orc_tex);
 
-    const soldier_tex = try asset_manager.loadTexture(&gc, &staging, engine.animation.SOLDIER_CONFIG.texture_path);
+    const soldier_tex = try asset_manager.loadTexture(&gc, &staging, engine.components.animation.SOLDIER_CONFIG.texture_path);
     const soldier_tex_id = renderer2d.registerTexture(&gc, soldier_tex);
 
     var triangle_mesh = try renderer.frontend.mesh.Mesh.init(&gc, &staging, &renderer.frontend.defaults.vertices, &renderer.frontend.defaults.index);
@@ -62,14 +62,10 @@ pub fn main() !void {
         @floatFromInt(window.height),
     );
 
-    var entity_manager = engine.entity_manager.EntityManager.init(allocator);
+    var entity_manager = engine.ecs.manager.EntityManager.init(allocator);
     defer entity_manager.deinit();
 
-    var player = engine.entity.Entity.init(
-        .{ .x = -150, .y = 0, .z = 0.2 },
-        orc_tex_id,
-        &engine.animation.ORC_CONFIG,
-    );
+    const player_id = try entity_manager.spawn(&engine.components.animation.ORC_CONFIG, orc_tex_id, -150, 0);
 
     var prng = std.Random.DefaultPrng.init(blk: {
         var seed: u64 = undefined;
@@ -85,10 +81,10 @@ pub fn main() !void {
 
         const rand_y = (random.float(f32) * 2.0 - 1.0) * camera.viewport_height;
 
-        _ = try entity_manager.spawn(&engine.animation.SOLDIER_CONFIG, soldier_tex_id, rand_x, rand_y);
+        _ = try entity_manager.spawn(&engine.components.animation.SOLDIER_CONFIG, soldier_tex_id, rand_x, rand_y);
     }
 
-    var player_controller = engine.controller.Controller{};
+    var controller = engine.gameplay.controller.Controller{};
 
     const GRAVITY: f32 = 1200.0;
     const JUMP_FORCE: f32 = 600.0;
@@ -125,14 +121,12 @@ pub fn main() !void {
             continue;
         }
 
-        player_controller.updateFromInput(input);
-        player_controller.applyToEntity(&player, move_speed, JUMP_FORCE);
+        controller.updateFromInput(&input);
+        controller.applyToEntity(&entity_manager.entities.items[player_id]);
 
-        entity_manager.updateAll(dt, camera.viewport_width, camera.viewport_height, GRAVITY);
-        player.update(dt, camera.viewport_width, camera.viewport_height, GRAVITY);
+        entity_manager.updateAll(dt, camera.viewport_width, camera.viewport_height, move_speed, JUMP_FORCE, GRAVITY);
 
         renderer2d.begin();
-        renderer2d.drawEntity(player, inv_vh);
         entity_manager.drawAll(&renderer2d, inv_vh);
         try renderer2d.end(&gc);
 

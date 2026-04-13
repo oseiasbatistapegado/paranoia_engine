@@ -1,5 +1,4 @@
-pub const entity = @import("entity.zig");
-pub const controller = @import("controller.zig");
-pub const physics = @import("physics.zig");
-pub const animation = @import("animation.zig");
-pub const entity_manager = @import("entity_manager.zig");
+pub const components = @import("components/root.zig");
+pub const gameplay = @import("gameplay/root.zig");
+pub const system = @import("systems/root.zig");
+pub const ecs = @import("ecs/root.zig");

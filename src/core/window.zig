@@ -11,7 +11,12 @@ pub const Window = struct {
     pub fn init(title: [:0]const u8, width: u32, height: u32) !Window {
         if (c.SDL_Init(c.SDL_INIT_VIDEO) == false) return error.SDLInitFailed;
 
-        const handle = c.SDL_CreateWindow(title, @intCast(width), @intCast(height), c.SDL_WINDOW_VULKAN | c.SDL_WINDOW_RESIZABLE) orelse return error.WindowInitFailed;
+        const handle = c.SDL_CreateWindow(
+            title,
+            @intCast(width),
+            @intCast(height),
+            c.SDL_WINDOW_VULKAN | c.SDL_WINDOW_RESIZABLE,
+        ) orelse return error.WindowInitFailed;
 
         return .{
             .handle = handle,
@@ -46,8 +51,10 @@ pub const Window = struct {
             self.width = new_w;
             self.height = new_h;
             self.resized = false;
+
             return true;
         }
+
         return false;
     }
 };

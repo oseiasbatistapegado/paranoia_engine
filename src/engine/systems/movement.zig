@@ -1,12 +1,23 @@
 const engine = @import("engine");
 
-pub fn update(entities: []engine.ecs.entity.Entity, move_speed: f32, jump_force: f32) void {
-    for (entities) |*entity| {
-        entity.physix.dx = entity.intent.move_x * move_speed;
-        entity.physix.dy = entity.intent.move_y * move_speed;
+pub fn update(
+    move_x: []f32,
+    move_y: []f32,
+    jump: []bool,
+    dx: []f32,
+    dy: []f32,
+    dz: []f32,
+    z: []f32,
+    count: usize,
+    move_speed: f32,
+    jump_force: f32,
+) void {
+    for (0..count) |i| {
+        dx[i] = move_x[i] * move_speed;
+        dy[i] = move_y[i] * move_speed;
 
-        if (entity.intent.jump and entity.physix.z <= 0) {
-            entity.physix.dz = jump_force;
+        if (jump[i] and z[i] <= 0) {
+            dz[i] = jump_force;
         }
     }
 }

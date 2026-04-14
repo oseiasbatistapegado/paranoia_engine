@@ -12,9 +12,9 @@ pub const Controller = struct {
         self.wants_to_jump = in.justPressed(.jump);
     }
 
-    pub fn applyToEntity(self: *Controller, entity: *engine.ecs.entity.Entity) void {
-        entity.intent.move_x = self.move_vec[0];
-        entity.intent.move_y = self.move_vec[1];
-        entity.intent.jump = self.wants_to_jump;
+    pub fn applyToEntity(self: *Controller, move_x: *f32, move_y: *f32, jump: *bool) void {
+        move_x.* = self.move_vec[0];
+        move_y.* = self.move_vec[1];
+        jump.* = self.wants_to_jump;
     }
 };

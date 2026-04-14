@@ -76,7 +76,7 @@ pub fn main() !void {
 
     const inv_vh = 1.0 / camera.viewport_height;
 
-    for (0..50) |_| {
+    for (0..220) |_| {
         const rand_x = (random.float(f32) * 2.0 - 1.0) * camera.viewport_width;
 
         const rand_y = (random.float(f32) * 2.0 - 1.0) * camera.viewport_height;
@@ -122,7 +122,11 @@ pub fn main() !void {
         }
 
         controller.updateFromInput(&input);
-        controller.applyToEntity(&entity_manager.entities.items[player_id]);
+        controller.applyToEntity(
+            &entity_manager.move_x.items[player_id],
+            &entity_manager.move_y.items[player_id],
+            &entity_manager.jump.items[player_id],
+        );
 
         entity_manager.updateAll(dt, camera.viewport_width, camera.viewport_height, move_speed, JUMP_FORCE, GRAVITY);
 

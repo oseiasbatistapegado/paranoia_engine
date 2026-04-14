@@ -3,9 +3,9 @@ const zmath = @import("zmath");
 const std = @import("std");
 
 pub const Entity = struct {
-    physix: engine.components.physix.PhysixComponent,
-    animation: engine.components.animation.AnimationComponent,
-    intent: engine.components.movement.MovementComponent,
+    // physix: engine.components.physix.PhysixComponent,
+    // animation: engine.components.animation.AnimationComponent,
+    // intent: engine.components.movement.MovementComponent,
 
     cached_scale_w: f32,
     cached_scale_h: f32,

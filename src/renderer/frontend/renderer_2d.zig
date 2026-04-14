@@ -1,5 +1,6 @@
 const std = @import("std");
 const vk = @import("vulkan");
+const zmath = @import("zmath");
 const renderer = @import("renderer");
 const core = @import("core");
 const engine = @import("engine");
@@ -85,32 +86,47 @@ pub const Renderer2D = struct {
         self.instance_count = 0;
     }
 
-    pub fn drawEntity(self: *Renderer2D, entity: engine.ecs.entity.Entity, vh: f32) void {
+    pub fn drawEntity(
+        self: *Renderer2D,
+        x: f32,
+        y: f32,
+        z: f32,
+
+        state: engine.components.animation.AnimationState,
+        facing_left: bool,
+        frame: u32,
+
+        texture: u32,
+        config: *const engine.components.animation.SpriteConfig,
+
+        sw: f32,
+        sh: f32,
+        inv_vh: f32,
+    ) void {
         if (self.instance_count >= self.max_instances) return;
 
-        const config = entity.config;
-        const current_anim = config.getAnim(entity.animation.state);
+        const current_anim = config.getAnim(state);
         const total_cols = config.sheet_width / config.sprite_width;
         const total_rows = config.sheet_height / config.sprite_height;
         const frame_width = 1.0 / total_cols;
         const frame_height = 1.0 / total_rows;
         const padding = 0.0001;
-        const col_index = @as(f32, @floatFromInt((current_anim.frame_start + entity.animation.current_frame) % @as(u32, @intFromFloat(total_cols))));
+        const col_index = @as(f32, @floatFromInt((current_anim.frame_start + frame) % @as(u32, @intFromFloat(total_cols))));
         const row_index = @as(f32, @floatFromInt(current_anim.row));
 
         var uv_s_x = frame_width - padding;
         var uv_o_x = (col_index * frame_width) + (padding / 2.0);
 
-        if (entity.animation.facing_left) {
+        if (facing_left) {
             uv_o_x += uv_s_x;
             uv_s_x *= -1.0;
         }
 
         self.instances[self.instance_count] = .{
-            .model = entity.getMatrix(vh),
+            .model = computeMatrix(x, y, z, sw, sh, inv_vh),
             .uv_offset = .{ uv_o_x, (row_index * frame_height) + (padding / 2.0) },
             .uv_scale = .{ uv_s_x, frame_height - padding },
-            .texture_id = entity.texture_id,
+            .texture_id = texture,
         };
 
         self.instance_count += 1;
@@ -218,5 +234,25 @@ pub const Renderer2D = struct {
         gc.dev.updateDescriptorSets(1, @ptrCast(&write), 0, null);
         self.next_slot += 1;
         return slot;
+    }
+
+    fn computeMatrix(
+        x: f32,
+        y: f32,
+        z: f32,
+        sw: f32,
+        sh: f32,
+        inv_vh: f32,
+    ) zmath.Mat {
+        const scale = zmath.scaling(sw, sh, 1.0);
+
+        const half_vh = (0.5 / inv_vh);
+        const normalized_y = (y + half_vh) * inv_vh;
+        const depth = 0.9 + (normalized_y * -0.8);
+
+        const visual_y = y - z;
+        const translation = zmath.translation(x, visual_y, depth);
+
+        return zmath.mul(scale, translation);
     }
 };

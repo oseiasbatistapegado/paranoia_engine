@@ -62,10 +62,10 @@ pub fn main() !void {
         @floatFromInt(window.height),
     );
 
-    var entity_manager = engine.ecs.manager.EntityManager.init(allocator);
-    defer entity_manager.deinit();
+    var registry = engine.ecs.registry.Registry.init(allocator);
+    defer registry.deinit();
 
-    const player_id = try entity_manager.spawn(&engine.components.animation.ORC_CONFIG, orc_tex_id, -150, 0);
+    const player_id = try registry.spawn(&engine.components.animation.ORC_CONFIG, orc_tex_id, -150, 0);
 
     var prng = std.Random.DefaultPrng.init(blk: {
         var seed: u64 = undefined;
@@ -81,7 +81,7 @@ pub fn main() !void {
 
         const rand_y = (random.float(f32) * 2.0 - 1.0) * camera.viewport_height;
 
-        _ = try entity_manager.spawn(&engine.components.animation.SOLDIER_CONFIG, soldier_tex_id, rand_x, rand_y);
+        _ = try registry.spawn(&engine.components.animation.SOLDIER_CONFIG, soldier_tex_id, rand_x, rand_y);
     }
 
     var controller = engine.gameplay.controller.Controller{};
@@ -123,15 +123,15 @@ pub fn main() !void {
 
         controller.updateFromInput(&input);
         controller.applyToEntity(
-            &entity_manager.move_x.items[player_id],
-            &entity_manager.move_y.items[player_id],
-            &entity_manager.jump.items[player_id],
+            &registry.move_x.items[player_id],
+            &registry.move_y.items[player_id],
+            &registry.jump.items[player_id],
         );
 
-        entity_manager.updateAll(dt, camera.viewport_width, camera.viewport_height, move_speed, JUMP_FORCE, GRAVITY);
+        registry.updateAll(dt, camera.viewport_width, camera.viewport_height, move_speed, JUMP_FORCE, GRAVITY);
 
         renderer2d.begin();
-        entity_manager.drawAll(&renderer2d, inv_vh);
+        registry.drawAll(&renderer2d, inv_vh);
         try renderer2d.end(&gc);
 
         const img_idx = try frame_manager.beginFrame(swapchain, frame_idx, images_in_flight);

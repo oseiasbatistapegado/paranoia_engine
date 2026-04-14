@@ -2,7 +2,7 @@ const std = @import("std");
 const engine = @import("engine");
 const renderer = @import("renderer");
 
-pub const EntityManager = struct {
+pub const Registry = struct {
     allocator: std.mem.Allocator,
 
     // physix component
@@ -33,7 +33,7 @@ pub const EntityManager = struct {
 
     count: usize = 0,
 
-    pub fn init(allocator: std.mem.Allocator) EntityManager {
+    pub fn init(allocator: std.mem.Allocator) Registry {
         return .{
             .allocator = allocator,
             // physix component
@@ -63,7 +63,7 @@ pub const EntityManager = struct {
         };
     }
 
-    pub fn deinit(self: *EntityManager) void {
+    pub fn deinit(self: *Registry) void {
         self.x.deinit(self.allocator);
         self.y.deinit(self.allocator);
         self.z.deinit(self.allocator);
@@ -88,7 +88,7 @@ pub const EntityManager = struct {
     }
 
     pub fn spawn(
-        self: *EntityManager,
+        self: *Registry,
         config: *const engine.components.animation.SpriteConfig,
         tex_id: u32,
         x: f32,
@@ -129,7 +129,7 @@ pub const EntityManager = struct {
         return id;
     }
 
-    pub fn updateAll(self: *EntityManager, dt: f32, vw: f32, vh: f32, move_speed: f32, jump_force: f32, gravity: f32) void {
+    pub fn updateAll(self: *Registry, dt: f32, vw: f32, vh: f32, move_speed: f32, jump_force: f32, gravity: f32) void {
         engine.system.movement.update(
             self.move_x.items,
             self.move_y.items,
@@ -184,7 +184,7 @@ pub const EntityManager = struct {
         );
     }
 
-    pub fn drawAll(self: *EntityManager, r2d: *renderer.frontend.renderer2d.Renderer2D, inv_vh: f32) void {
+    pub fn drawAll(self: *Registry, r2d: *renderer.frontend.renderer2d.Renderer2D, inv_vh: f32) void {
         for (0..self.count) |i| {
             r2d.drawEntity(
                 self.x.items[i],

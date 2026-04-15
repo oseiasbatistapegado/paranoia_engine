@@ -2,15 +2,16 @@ const std = @import("std");
 const vk = @import("vulkan");
 const c = @import("c");
 const zmath = @import("zmath");
-const core = @import("core");
+const platform = @import("platform");
 const engine = @import("engine");
+const game = @import("game");
 const renderer = @import("renderer");
 const zstbi = @import("zstbi");
 
 const app_name = "Paranoia Engine";
 
 pub fn main() !void {
-    var window = try core.window.Window.init(app_name, 1920, 1080);
+    var window = try platform.window.Window.init(app_name, 1920, 1080);
     defer window.deinit();
 
     var gpa = std.heap.GeneralPurposeAllocator(.{}){};
@@ -41,10 +42,10 @@ pub fn main() !void {
 
     var staging = try gc.beginStaging(frame_manager.pool);
 
-    const orc_tex = try asset_manager.loadTexture(&gc, &staging, engine.components.animation.ORC_CONFIG.texture_path);
+    const orc_tex = try asset_manager.loadTexture(&gc, &staging, game.resources.characters.ORC_CONFIG.texture_path);
     const orc_tex_id = renderer2d.registerTexture(&gc, orc_tex);
 
-    const soldier_tex = try asset_manager.loadTexture(&gc, &staging, engine.components.animation.SOLDIER_CONFIG.texture_path);
+    const soldier_tex = try asset_manager.loadTexture(&gc, &staging, game.resources.characters.SOLDIER_CONFIG.texture_path);
     const soldier_tex_id = renderer2d.registerTexture(&gc, soldier_tex);
 
     var triangle_mesh = try renderer.frontend.mesh.Mesh.init(&gc, &staging, &renderer.frontend.defaults.vertices, &renderer.frontend.defaults.index);
@@ -65,7 +66,7 @@ pub fn main() !void {
     var registry = engine.ecs.registry.Registry.init(allocator);
     defer registry.deinit();
 
-    const player_id = try registry.spawn(&engine.components.animation.ORC_CONFIG, orc_tex_id, -150, 0);
+    const player_id = try registry.spawn("PAIR", &game.resources.characters.ORC_CONFIG, orc_tex_id, -150, 0);
 
     var prng = std.Random.DefaultPrng.init(blk: {
         var seed: u64 = undefined;
@@ -81,19 +82,19 @@ pub fn main() !void {
 
         const rand_y = (random.float(f32) * 2.0 - 1.0) * camera.viewport_height;
 
-        _ = try registry.spawn(&engine.components.animation.SOLDIER_CONFIG, soldier_tex_id, rand_x, rand_y);
+        _ = try registry.spawn("PAR", &game.resources.characters.SOLDIER_CONFIG, soldier_tex_id, rand_x, rand_y);
     }
 
-    var controller = engine.gameplay.controller.Controller{};
+    var controller = game.gameplay.controller.Controller{};
 
     const GRAVITY: f32 = 1200.0;
     const JUMP_FORCE: f32 = 600.0;
     const move_speed: f32 = 500.0;
 
-    var input = try core.input.InputManager.init(allocator);
+    var input = try platform.input.InputManager.init(allocator);
     defer input.deinit();
 
-    var clock = try core.time.Clock.init(60.0);
+    var clock = try platform.time.Clock.init(60.0);
     var frame_idx: u32 = 0;
     var state: renderer.backend.swapchain.Swapchain.PresentState = .optimal;
     var quit = false;
@@ -123,9 +124,9 @@ pub fn main() !void {
 
         controller.updateFromInput(&input);
         controller.applyToEntity(
-            &registry.move_x.items[player_id],
-            &registry.move_y.items[player_id],
-            &registry.jump.items[player_id],
+            &registry.PAIR.move_x.items[player_id],
+            &registry.PAIR.move_y.items[player_id],
+            &registry.PAIR.jump.items[player_id],
         );
 
         registry.updateAll(dt, camera.viewport_width, camera.viewport_height, move_speed, JUMP_FORCE, GRAVITY);

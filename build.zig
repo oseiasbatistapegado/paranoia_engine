@@ -38,14 +38,14 @@ pub fn build(b: *std.Build) void {
     c.linkSystemLibrary("sdl3", .{});
     exe.root_module.addImport("c", c);
 
-    const core = b.addModule("core", .{
-        .root_source_file = b.path("src/core/root.zig"),
+    const platform = b.addModule("platform", .{
+        .root_source_file = b.path("src/platform/root.zig"),
         .target = target,
         .optimize = optimize,
     });
-    core.addImport("vulkan", vulkan);
-    core.addImport("c", c);
-    exe.root_module.addImport("core", core);
+    platform.addImport("vulkan", vulkan);
+    platform.addImport("c", c);
+    exe.root_module.addImport("platform", platform);
 
     const engine = b.addModule("engine", .{
         .root_source_file = b.path("src/engine/root.zig"),
@@ -53,9 +53,18 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     engine.addImport("engine", engine);
-    engine.addImport("core", core);
+    engine.addImport("platform", platform);
     engine.addImport("zmath", zmath.module("root"));
     exe.root_module.addImport("engine", engine);
+
+    const game = b.addModule("game", .{
+        .root_source_file = b.path("src/game/root.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    game.addImport("platform", platform);
+    game.addImport("engine", engine);
+    exe.root_module.addImport("game", game);
 
     const renderer = b.addModule("render", .{
         .root_source_file = b.path("src/renderer/root.zig"),
@@ -64,7 +73,7 @@ pub fn build(b: *std.Build) void {
     });
     engine.addImport("renderer", renderer);
     renderer.addImport("c", c);
-    renderer.addImport("core", core);
+    renderer.addImport("platform", platform);
     renderer.addImport("engine", engine);
     renderer.addImport("vulkan", vulkan);
     renderer.addImport("zmath", zmath.module("root"));

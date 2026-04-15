@@ -1,23 +1,20 @@
 const engine = @import("engine");
 
 pub fn update(
-    move_x: []f32,
-    move_y: []f32,
-    jump: []bool,
-    dx: []f32,
-    dy: []f32,
-    dz: []f32,
-    z: []f32,
-    count: usize,
+    comptime T: type, 
+    registry: *T,
     move_speed: f32,
     jump_force: f32,
 ) void {
-    for (0..count) |i| {
-        dx[i] = move_x[i] * move_speed;
-        dy[i] = move_y[i] * move_speed;
+    if (!(@hasField(T, "move_x") and @hasField(T, "move_y") and @hasField(T, "jump")))
+        return;
 
-        if (jump[i] and z[i] <= 0) {
-            dz[i] = jump_force;
+    for (0..registry.count) |i| {
+        registry.dx.items[i] = registry.move_x.items[i] * move_speed;
+        registry.dy.items[i] = registry.move_y.items[i] * move_speed;
+
+        if (registry.jump.items[i] and registry.z.items[i] <= 0) {
+            registry.dz.items[i] = jump_force;
         }
     }
 }

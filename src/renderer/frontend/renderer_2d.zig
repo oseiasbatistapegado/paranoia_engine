@@ -2,7 +2,7 @@ const std = @import("std");
 const vk = @import("vulkan");
 const zmath = @import("zmath");
 const renderer = @import("renderer");
-const core = @import("core");
+const platform = @import("platform");
 const engine = @import("engine");
 
 pub const Renderer2D = struct {
@@ -92,12 +92,12 @@ pub const Renderer2D = struct {
         y: f32,
         z: f32,
 
-        state: engine.components.animation.AnimationState,
+        state: engine.resources.animation.AnimationState,
         facing_left: bool,
         frame: u32,
 
         texture: u32,
-        config: *const engine.components.animation.SpriteConfig,
+        config: *const engine.resources.animation.SpriteConfig,
 
         sw: f32,
         sh: f32,

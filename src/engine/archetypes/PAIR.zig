@@ -4,6 +4,9 @@ const engine = @import("engine");
 pub const PAIR = struct {
     allocator: std.mem.Allocator,
 
+    // entity
+    entity_id: std.ArrayList(u32),
+
     // physix component
     x: std.ArrayList(f32),
     y: std.ArrayList(f32),
@@ -33,61 +36,28 @@ pub const PAIR = struct {
     count: usize,
 
     pub fn init(allocator: std.mem.Allocator) PAIR {
-        return .{
-            .allocator = allocator,
+        var self: PAIR = undefined;
+        self.allocator = allocator;
+        self.count = 0;
 
-            .x = .empty,
-            .y = .empty,
-            .z = .empty,
-            .dx = .empty,
-            .dy = .empty,
-            .dz = .empty,
-            .friction = .empty,
+        inline for (std.meta.fields(@TypeOf(self))) |field| {
+            if (comptime std.meta.hasFn(field.type, "swapRemove"))
+                @field(self, field.name) = .empty;
+        }
 
-            .state = .empty,
-            .facing_left = .empty,
-            .current_frame = .empty,
-            .timer = .empty,
-
-            .move_x = .empty,
-            .move_y = .empty,
-            .jump = .empty,
-
-            .cached_scale_w = .empty,
-            .cached_scale_h = .empty,
-            .texture_id = .empty,
-            .config = .empty,
-
-            .count = 0,
-        };
+        return self;
     }
 
     pub fn deinit(self: *PAIR) void {
-        self.x.deinit(self.allocator);
-        self.y.deinit(self.allocator);
-        self.z.deinit(self.allocator);
-        self.dx.deinit(self.allocator);
-        self.dy.deinit(self.allocator);
-        self.dz.deinit(self.allocator);
-        self.friction.deinit(self.allocator);
-
-        self.state.deinit(self.allocator);
-        self.facing_left.deinit(self.allocator);
-        self.current_frame.deinit(self.allocator);
-        self.timer.deinit(self.allocator);
-
-        self.move_x.deinit(self.allocator);
-        self.move_y.deinit(self.allocator);
-        self.jump.deinit(self.allocator);
-
-        self.cached_scale_w.deinit(self.allocator);
-        self.cached_scale_h.deinit(self.allocator);
-        self.texture_id.deinit(self.allocator);
-        self.config.deinit(self.allocator);
+        inline for (std.meta.fields(@TypeOf(self.*))) |field| {
+            if (comptime std.meta.hasFn(field.type, "deinit"))
+                @field(self, field.name).deinit(self.allocator);
+        }
     }
 
     pub fn append(
         self: *PAIR,
+        id: u32,
         config: *const engine.resources.animation.SpriteConfig,
         tex_id: u32,
         x: f32,
@@ -95,6 +65,8 @@ pub const PAIR = struct {
     ) !usize {
         const base_h = 300.0;
         const aspect = config.sprite_width / config.sprite_height;
+
+        try self.entity_id.append(self.allocator, id);
 
         // Physix
         try self.x.append(self.allocator, x);
@@ -122,9 +94,25 @@ pub const PAIR = struct {
         try self.cached_scale_w.append(self.allocator, base_h * aspect);
         try self.cached_scale_h.append(self.allocator, base_h);
 
-        const id = self.count;
+        const arch_idx = self.count;
         self.count += 1;
 
-        return id;
+        return arch_idx;
+    }
+
+    pub fn swapRemove(self: *PAIR, index: u32) ?u32 {
+        if (self.count == 0) return null;
+
+        inline for (std.meta.fields(@TypeOf(self.*))) |field| {
+            if (comptime std.meta.hasFn(field.type, "swapRemove"))
+                _ = @field(self, field.name).swapRemove(index);
+        }
+
+        self.count -= 1;
+
+        if (index < self.count)
+            return self.entity_id.items[index];
+
+        return null;
     }
 };

@@ -122,9 +122,16 @@ pub const Renderer2D = struct {
             uv_s_x *= -1.0;
         }
 
+        const visual_y = y - z;
+        const half_vh = (0.5 / inv_vh);
+        const normalized_y = (y + half_vh) * inv_vh;
+        const depth = 0.9 + (normalized_y * -0.8);
+
+        // Agora apenas populamos a struct, sem calcular matrizes!
         self.instances[self.instance_count] = .{
-            .model = computeMatrix(x, y, z, sw, sh, inv_vh),
-            .uv_offset = .{ uv_o_x, (row_index * frame_height) + (padding / 2.0) },
+            .pos = .{ x, visual_y, depth },
+            .scale = .{ sw, sh },
+           .uv_offset = .{ uv_o_x, (row_index * frame_height) + (padding / 2.0) },
             .uv_scale = .{ uv_s_x, frame_height - padding },
             .texture_id = texture,
         };

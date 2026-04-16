@@ -176,47 +176,6 @@ pub const Swapchain = struct {
     pub fn currentSwapImage(self: Swapchain) *const SwapImage {
         return &self.swap_images[self.image_index];
     }
-
-    pub fn present(self: *Swapchain, cmdbuf: vk.CommandBuffer) !PresentState {
-        const current = self.currentSwapImage();
-        try current.waitForFence(self.gc);
-        try self.gc.dev.resetFences(1, @ptrCast(&current.frame_fence));
-
-        const wait_stage = [_]vk.PipelineStageFlags{.{ .top_of_pipe_bit = true }};
-        try self.gc.dev.queueSubmit(self.gc.graphics_queue.handle, 1, &[_]vk.SubmitInfo{.{
-            .wait_semaphore_count = 1,
-            .p_wait_semaphores = @ptrCast(&current.image_acquired),
-            .p_wait_dst_stage_mask = &wait_stage,
-            .command_buffer_count = 1,
-            .p_command_buffers = @ptrCast(&cmdbuf),
-            .signal_semaphore_count = 1,
-            .p_signal_semaphores = @ptrCast(&current.render_finished),
-        }}, current.frame_fence);
-
-        _ = try self.gc.dev.queuePresentKHR(self.gc.present_queue.handle, &.{
-            .wait_semaphore_count = 1,
-            .p_wait_semaphores = @ptrCast(&current.render_finished),
-            .swapchain_count = 1,
-            .p_swapchains = @ptrCast(&self.handle),
-            .p_image_indices = @ptrCast(&self.image_index),
-        });
-
-        const result = try self.gc.dev.acquireNextImageKHR(
-            self.handle,
-            std.math.maxInt(u64),
-            self.next_image_acquired,
-            .null_handle,
-        );
-
-        std.mem.swap(vk.Semaphore, &self.swap_images[result.image_index].image_acquired, &self.next_image_acquired);
-        self.image_index = result.image_index;
-
-        return switch (result.result) {
-            .success => .optimal,
-            .suboptimal_khr => .suboptimal,
-            else => unreachable,
-        };
-    }
 };
 
 const SwapImage = struct {
@@ -314,9 +273,9 @@ fn findPresentMode(gc: *const GraphicsContext, allocator: Allocator) !vk.Present
     defer allocator.free(present_modes);
 
     const preferred = [_]vk.PresentModeKHR{
-        .fifo_khr,
         .mailbox_khr,
         .immediate_khr,
+        .fifo_khr,
     };
 
     for (preferred) |mode| {

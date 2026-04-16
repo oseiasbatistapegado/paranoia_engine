@@ -66,7 +66,7 @@ pub fn main() !void {
     var registry = engine.ecs.registry.Registry.init(allocator);
     defer registry.deinit();
 
-    const player_id = try registry.spawn("PAIR", &game.resources.characters.ORC_CONFIG, orc_tex_id, -150, 0);
+    const player = try registry.spawn("PAIR", &game.resources.characters.ORC_CONFIG, orc_tex_id, -150, 0);
 
     var prng = std.Random.DefaultPrng.init(blk: {
         var seed: u64 = undefined;
@@ -77,7 +77,7 @@ pub fn main() !void {
 
     const inv_vh = 1.0 / camera.viewport_height;
 
-    for (0..220) |_| {
+    for (0..400) |_| {
         const rand_x = (random.float(f32) * 2.0 - 1.0) * camera.viewport_width;
 
         const rand_y = (random.float(f32) * 2.0 - 1.0) * camera.viewport_height;
@@ -123,10 +123,12 @@ pub fn main() !void {
         }
 
         controller.updateFromInput(&input);
+
+        const arch_idx = registry.indices.items[player.id];
         controller.applyToEntity(
-            &registry.PAIR.move_x.items[player_id],
-            &registry.PAIR.move_y.items[player_id],
-            &registry.PAIR.jump.items[player_id],
+            &registry.PAIR.move_x.items[arch_idx],
+            &registry.PAIR.move_y.items[arch_idx],
+            &registry.PAIR.jump.items[arch_idx],
         );
 
         registry.updateAll(dt, camera.viewport_width, camera.viewport_height, move_speed, JUMP_FORCE, GRAVITY);

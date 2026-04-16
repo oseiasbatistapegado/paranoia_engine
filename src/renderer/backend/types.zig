@@ -31,9 +31,10 @@ pub const Vertex = struct {
 };
 
 pub const InstanceData = struct {
-    model: zmath.Mat,
-    uv_offset: [2]f32 = .{ 0.0, 0.0 },
-    uv_scale: [2]f32 = .{ 1.0, 1.0 },
+    pos: [3]f32,        // x, visual_y, depth
+    scale: [2]f32,      // sw, sh
+    uv_offset: [2]f32,
+    uv_scale: [2]f32,
     texture_id: u32,
 
     pub const binding_description = vk.VertexInputBindingDescription{
@@ -43,16 +44,11 @@ pub const InstanceData = struct {
     };
 
     pub const attribute_descriptions = [_]vk.VertexInputAttributeDescription{
-        .{ .binding = 1, .location = 2, .format = .r32g32b32a32_sfloat, .offset = 0 },
-        .{ .binding = 1, .location = 3, .format = .r32g32b32a32_sfloat, .offset = 16 },
-        .{ .binding = 1, .location = 4, .format = .r32g32b32a32_sfloat, .offset = 32 },
-        .{ .binding = 1, .location = 5, .format = .r32g32b32a32_sfloat, .offset = 48 },
-
-        .{ .binding = 1, .location = 6, .format = .r32g32_sfloat, .offset = @offsetOf(InstanceData, "uv_offset") },
-
-        .{ .binding = 1, .location = 7, .format = .r32g32_sfloat, .offset = @offsetOf(InstanceData, "uv_scale") },
-
-        .{ .binding = 1, .location = 8, .format = .r32_uint, .offset = @offsetOf(InstanceData, "texture_id") },
+        .{ .binding = 1, .location = 2, .format = .r32g32b32_sfloat, .offset = @offsetOf(InstanceData, "pos") },
+        .{ .binding = 1, .location = 3, .format = .r32g32_sfloat, .offset = @offsetOf(InstanceData, "scale") },
+        .{ .binding = 1, .location = 4, .format = .r32g32_sfloat, .offset = @offsetOf(InstanceData, "uv_offset") },
+        .{ .binding = 1, .location = 5, .format = .r32g32_sfloat, .offset = @offsetOf(InstanceData, "uv_scale") },
+        .{ .binding = 1, .location = 6, .format = .r32_uint, .offset = @offsetOf(InstanceData, "texture_id") },
     };
 };
 

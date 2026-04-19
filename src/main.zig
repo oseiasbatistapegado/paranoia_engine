@@ -134,7 +134,7 @@ pub fn main() !void {
         registry.updateAll(dt, camera.viewport_width, camera.viewport_height, move_speed, JUMP_FORCE, GRAVITY);
 
         renderer2d.begin();
-        registry.drawAll(&renderer2d, inv_vh);
+        registry.drawAll(&renderer2d, &camera, inv_vh);
         try renderer2d.end(&gc);
 
         const img_idx = try frame_manager.beginFrame(swapchain, frame_idx, images_in_flight);

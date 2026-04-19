@@ -110,10 +110,15 @@ pub const Registry = struct {
         }
     }
 
-    pub fn drawAll(self: *Registry, r2d: *renderer.frontend.renderer2d.Renderer2D, inv_vh: f32) void {
+    pub fn drawAll(
+        self: *Registry,
+        r2d: *renderer.frontend.renderer2d.Renderer2D,
+        camera: *renderer.frontend.camera.Camera2D,
+        inv_vh: f32,
+    ) void {
         inline for (.{ &self.PAIR, &self.PAR }) |archetype| {
             const T = @TypeOf(archetype.*);
-            renderer.systems.render.update(T, archetype, r2d, inv_vh);
+            renderer.systems.render.update(T, archetype, r2d, camera, inv_vh);
         }
     }
 };

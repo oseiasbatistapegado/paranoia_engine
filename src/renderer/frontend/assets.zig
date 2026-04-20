@@ -2,7 +2,8 @@ const std = @import("std");
 const renderer = @import("renderer");
 const GraphicsContext = renderer.backend.context.GraphicsContext;
 const Texture = renderer.backend.texture.Texture;
-const zstbi = @import("zstbi");
+const c = @import("c");
+// const zstbi = @import("zstbi");
 
 pub const AssetManager = struct {
     allocator: std.mem.Allocator,
@@ -34,10 +35,19 @@ pub const AssetManager = struct {
         const path_c = try self.allocator.dupeZ(u8, path);
         defer self.allocator.free(path_c);
 
-        var image = try zstbi.Image.loadFromFile(path_c, 4);
-        defer image.deinit();
+        var width: c_int = 0;
+        var height: c_int = 0;
+        var channels: c_int = 0;
 
-        const tex = try gc.createTextureDeferred(staging, image.width, image.height, image.data);
+        const data = c.stbi_load(path_c, &width, &height, &channels, 4) orelse {
+            return error.FailedToLoadImage;
+        };
+        defer c.stbi_image_free(data);
+
+        const size = @as(usize, @intCast(width)) * @as(usize, @intCast(height)) * 4;
+        const pixels = @as([*]const u8, @ptrCast(data))[0..size];
+
+        const tex = try gc.createTextureDeferred(staging, @intCast(width), @intCast(height), pixels);
 
         try self.textures.put(path, tex);
         return tex;

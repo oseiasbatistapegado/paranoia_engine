@@ -6,20 +6,14 @@ const platform = @import("platform");
 const engine = @import("engine");
 const game = @import("game");
 const renderer = @import("renderer");
-const zstbi = @import("zstbi");
 
 const app_name = "Paranoia Engine";
 
-pub fn main() !void {
+pub fn main(init: std.process.Init) !void {
     var window = try platform.window.Window.init(app_name, 1920, 1080);
     defer window.deinit();
 
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
-
-    zstbi.init(allocator);
-    defer zstbi.deinit();
+    const allocator = init.gpa;
 
     const gc = try renderer.backend.context.GraphicsContext.init(allocator, app_name, window.handle);
     defer gc.deinit();
@@ -70,7 +64,7 @@ pub fn main() !void {
 
     var prng = std.Random.DefaultPrng.init(blk: {
         var seed: u64 = undefined;
-        try std.posix.getrandom(std.mem.asBytes(&seed));
+        init.io.random(std.mem.asBytes(&seed));
         break :blk seed;
     });
     const random = prng.random();
@@ -94,7 +88,7 @@ pub fn main() !void {
     var input = try platform.input.InputManager.init(allocator);
     defer input.deinit();
 
-    var clock = try platform.time.Clock.init(60.0);
+    var clock = try platform.time.Clock.init(init.io, 60.0);
     var frame_idx: u32 = 0;
     var state: renderer.backend.swapchain.Swapchain.PresentState = .optimal;
     var quit = false;
@@ -164,7 +158,7 @@ pub fn main() !void {
             if (err == error.OutOfDateKHR) state = .suboptimal else return err;
         };
 
-        clock.sleep();
+        try clock.sleep();
         frame_idx = (frame_idx + 1) % @as(u32, @intCast(frame_manager.in_flight_fences.len));
     }
     try gc.dev.deviceWaitIdle();

@@ -1,4 +1,5 @@
 assets
 .direnv
 .zig-cache
+zig-pkg
 zig-out

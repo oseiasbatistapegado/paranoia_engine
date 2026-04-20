@@ -174,18 +174,16 @@ pub const Renderer2D = struct {
             .graphics,
             pipeline_layout,
             0,
-            1,
-            @ptrCast(&self.descriptor_set),
-            0,
+            &[_]vk.DescriptorSet{self.descriptor_set},
             null,
         );
 
         const offsets = [_]vk.DeviceSize{0};
 
-        gc.dev.cmdBindVertexBuffers(cmd_buffer, 0, 1, @ptrCast(&mesh.vertex_buffer.handle), &offsets);
+        gc.dev.cmdBindVertexBuffers(cmd_buffer, 0, &[_]vk.Buffer{mesh.vertex_buffer.handle}, &offsets);
         gc.dev.cmdBindIndexBuffer(cmd_buffer, mesh.index_buffer.handle, 0, .uint16);
 
-        gc.dev.cmdBindVertexBuffers(cmd_buffer, 1, 1, @ptrCast(&self.instance_buffers[self.current_frame].handle), &offsets);
+        gc.dev.cmdBindVertexBuffers(cmd_buffer, 1, &[_]vk.Buffer{self.instance_buffers[self.current_frame].handle}, &offsets);
 
         gc.dev.cmdDrawIndexed(cmd_buffer, mesh.index_count, self.instance_count, 0, 0, 0);
 
@@ -238,7 +236,7 @@ pub const Renderer2D = struct {
             .p_texel_buffer_view = undefined,
         };
 
-        gc.dev.updateDescriptorSets(1, @ptrCast(&write), 0, null);
+        gc.dev.updateDescriptorSets(&[_]vk.WriteDescriptorSet{write}, null);
         self.next_slot += 1;
         return slot;
     }

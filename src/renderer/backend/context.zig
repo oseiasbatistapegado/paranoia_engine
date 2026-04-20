@@ -240,7 +240,8 @@ pub const GraphicsContext = struct {
             .level = .primary,
             .command_buffer_count = 1,
         }, @ptrCast(&cmdbuf_handle));
-        defer self.dev.freeCommandBuffers(pool, 1, @ptrCast(&cmdbuf_handle));
+        // defer self.dev.freeCommandBuffers(pool, 1, @ptrCast(&cmdbuf_handle));
+        defer self.dev.freeCommandBuffers(pool, &cmdbuf_handle);
 
         const cmdbuf = GraphicsContext.CommandBuffer.init(cmdbuf_handle, self.dev.wrapper);
 
@@ -297,11 +298,11 @@ pub const GraphicsContext = struct {
         const device_buf = try self.createBuffer(size, combined_usage, .{ .device_local_bit = true });
 
         const cmdbuf = GraphicsContext.CommandBuffer.init(staging.cmdbuf, self.dev.wrapper);
-        cmdbuf.copyBuffer(staging_buf.handle, device_buf.handle, 1, @ptrCast(&vk.BufferCopy{
+        cmdbuf.copyBuffer(staging_buf.handle, device_buf.handle, &[_]vk.BufferCopy{vk.BufferCopy{
             .src_offset = 0,
             .dst_offset = 0,
             .size = size,
-        }));
+        }});
 
         return device_buf;
     }
@@ -315,9 +316,9 @@ pub const GraphicsContext = struct {
             .p_command_buffers = @ptrCast(&staging.cmdbuf),
         };
 
-        try self.dev.queueSubmit(self.graphics_queue.handle, 1, @ptrCast(&si), staging.fence);
+        try self.dev.queueSubmit(self.graphics_queue.handle, &[_]vk.SubmitInfo{si}, staging.fence);
 
-        _ = try self.dev.waitForFences(1, @ptrCast(&staging.fence), vk.Bool32.true, std.math.maxInt(u64));
+        _ = try self.dev.waitForFences(&[_]vk.Fence{staging.fence}, vk.Bool32.true, std.math.maxInt(u64));
     }
 
     pub fn createTextureDeferred(

@@ -130,12 +130,9 @@ pub const Texture = struct {
             source_stage,
             destination_stage,
             .{},
-            0,
             null,
-            0,
             null,
-            1,
-            @ptrCast(&barrier),
+            &[_]vk.ImageMemoryBarrier{barrier},
         );
     }
 
@@ -166,9 +163,17 @@ pub const Texture = struct {
             buffer,
             image,
             .transfer_dst_optimal,
-            1,
-            @ptrCast(&region),
+            &[_]vk.BufferImageCopy{region},
         );
+
+        // gc.dev.cmdCopyBufferToImage(
+        //     cmd,
+        //     buffer,
+        //     image,
+        //     .transfer_dst_optimal,
+        //     1,
+        //     @ptrCast(&region),
+        // );
     }
 
     pub fn deinit(self: Texture, dev: vk.DeviceProxy) void {

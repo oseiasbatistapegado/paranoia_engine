@@ -84,8 +84,8 @@ pub const FrameManager = struct {
             .extent = extent,
         };
 
-        self.gc.dev.cmdSetViewport(cmdbuf, 0, 1, @ptrCast(&viewport));
-        self.gc.dev.cmdSetScissor(cmdbuf, 0, 1, @ptrCast(&scissor));
+        self.gc.dev.cmdSetViewport(cmdbuf, 0, &[_]vk.Viewport{viewport});
+        self.gc.dev.cmdSetScissor(cmdbuf, 0, &[_]vk.Rect2D{scissor});
 
         self.gc.dev.cmdBeginRenderPass(cmdbuf, &.{
             .render_pass = self.render_pass,
@@ -142,7 +142,8 @@ pub const FrameManager = struct {
         for (self.frame_buffers) |fb| self.gc.dev.destroyFramebuffer(fb, null);
 
         if (self.command_buffers.len > 0) {
-            self.gc.dev.freeCommandBuffers(self.pool, @intCast(self.command_buffers.len), self.command_buffers.ptr);
+            self.gc.dev.freeCommandBuffers(self.pool, self.command_buffers);
+            // self.gc.dev.freeCommandBuffers(self.pool, @intCast(self.command_buffers.len), self.command_buffers.ptr);
         }
 
         self.allocator.free(self.frame_buffers);
@@ -155,7 +156,7 @@ pub const FrameManager = struct {
     }
 
     pub fn beginFrame(self: *FrameManager, swapchain: Swapchain, frame_idx: u32, images_in_flight: []vk.Fence) !u32 {
-        _ = try self.gc.dev.waitForFences(1, @ptrCast(&self.in_flight_fences[frame_idx]), .true, std.math.maxInt(u64));
+        _ = try self.gc.dev.waitForFences(&[_]vk.Fence{self.in_flight_fences[frame_idx]}, .true, std.math.maxInt(u64));
 
         const result = try self.gc.dev.acquireNextImageKHR(
             swapchain.handle,
@@ -165,19 +166,19 @@ pub const FrameManager = struct {
         );
 
         if (images_in_flight[result.image_index] != .null_handle) {
-            _ = try self.gc.dev.waitForFences(1, @ptrCast(&images_in_flight[result.image_index]), .true, std.math.maxInt(u64));
+            _ = try self.gc.dev.waitForFences(&[_]vk.Fence{images_in_flight[result.image_index]}, .true, std.math.maxInt(u64));
         }
 
         images_in_flight[result.image_index] = self.in_flight_fences[frame_idx];
 
-        try self.gc.dev.resetFences(1, @ptrCast(&self.in_flight_fences[frame_idx]));
+        try self.gc.dev.resetFences(&[_]vk.Fence{self.in_flight_fences[frame_idx]});
         return result.image_index;
     }
 
     pub fn endFrame(self: *FrameManager, swapchain: Swapchain, frame_idx: u32, img_idx: u32) !void {
         const wait_stage = [_]vk.PipelineStageFlags{.{ .color_attachment_output_bit = true, .early_fragment_tests_bit = true }};
 
-        try self.gc.dev.queueSubmit(self.gc.graphics_queue.handle, 1, @ptrCast(&vk.SubmitInfo{
+        try self.gc.dev.queueSubmit(self.gc.graphics_queue.handle, &[_]vk.SubmitInfo{vk.SubmitInfo{
             .wait_semaphore_count = 1,
             .p_wait_semaphores = @ptrCast(&self.image_available_semaphores[frame_idx]),
             .p_wait_dst_stage_mask = &wait_stage,
@@ -186,7 +187,7 @@ pub const FrameManager = struct {
             .signal_semaphore_count = 1,
 
             .p_signal_semaphores = @ptrCast(&self.render_finished_semaphores[img_idx]),
-        }), self.in_flight_fences[frame_idx]);
+        }}, self.in_flight_fences[frame_idx]);
 
         _ = try self.gc.dev.queuePresentKHR(self.gc.present_queue.handle, &.{
             .wait_semaphore_count = 1,

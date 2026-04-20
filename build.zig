@@ -16,27 +16,27 @@ pub fn build(b: *std.Build) void {
     });
 
     b.installArtifact(exe);
-    exe.root_module.linkSystemLibrary("sdl3", .{});
 
     const zmath = b.dependency("zmath", .{});
     exe.root_module.addImport("zmath", zmath.module("root"));
 
-    const zstbi = b.dependency("zstbi", .{});
-    exe.root_module.addImport("zstbi", zstbi.module("root"));
-
-    const registry_path = std.process.getEnvVarOwned(b.allocator, "VULKAN_REGISTRY") catch "/path/to/vk.xml";
-    const vulkan = b.dependency("vulkan_zig", .{
+    const registry_path = b.graph.environ_map.get("VULKAN_REGISTRY").?;
+    const vulkan = b.dependency("vulkan", .{
         .registry = registry_path,
     }).module("vulkan-zig");
     exe.root_module.addImport("vulkan", vulkan);
 
-    const c = b.addModule("c", .{
-        .root_source_file = b.path("src/c.zig"),
+    const translate_c = b.addTranslateC(.{
+        .root_source_file = b.path("libs/c/c.h"),
         .target = target,
         .optimize = optimize,
     });
-    c.linkSystemLibrary("sdl3", .{});
-    exe.root_module.addImport("c", c);
+    translate_c.addIncludePath(b.path("libs"));
+    translate_c.linkSystemLibrary("sdl3", .{});
+
+    const module_c = translate_c.createModule();
+    module_c.addCSourceFile(.{ .file = b.path("libs/stb/stb_impl.c"), .flags = &[_][]const u8{} });
+    exe.root_module.addImport("c", module_c);
 
     const platform = b.addModule("platform", .{
         .root_source_file = b.path("src/platform/root.zig"),
@@ -44,7 +44,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     platform.addImport("vulkan", vulkan);
-    platform.addImport("c", c);
+    platform.addImport("c", module_c);
     exe.root_module.addImport("platform", platform);
 
     const engine = b.addModule("engine", .{
@@ -72,12 +72,11 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     engine.addImport("renderer", renderer);
-    renderer.addImport("c", c);
+    renderer.addImport("c", module_c);
     renderer.addImport("platform", platform);
     renderer.addImport("engine", engine);
     renderer.addImport("vulkan", vulkan);
     renderer.addImport("zmath", zmath.module("root"));
-    renderer.addImport("zstbi", zstbi.module("root"));
     renderer.addImport("renderer", renderer);
     exe.root_module.addImport("renderer", renderer);
 

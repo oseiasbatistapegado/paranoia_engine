@@ -256,12 +256,23 @@ fn createPipeline(
     };
 
     var pipeline: vk.Pipeline = undefined;
+    var pipelines = [_]vk.Pipeline{pipeline};
+
     _ = try gc.dev.createGraphicsPipelines(
         .null_handle,
-        1,
-        @ptrCast(&gpci),
+        &[_]vk.GraphicsPipelineCreateInfo{gpci},
         null,
-        @ptrCast(&pipeline),
+        pipelines[0..],
     );
+
+    pipeline = pipelines[0];
+
+    // _ = try gc.dev.createGraphicsPipelines(
+    //     .null_handle,
+    //     1,
+    //     @ptrCast(&gpci),
+    //     null,
+    //     @ptrCast(&pipeline),
+    // );
     return pipeline;
 }

@@ -6,8 +6,7 @@ pub fn update(
     move_speed: f32,
     jump_force: f32,
 ) void {
-    if (!(@hasField(T, "move_x") and @hasField(T, "move_y") and @hasField(T, "jump")))
-        return;
+    if (comptime !(@hasField(T, "move_x") and @hasField(T, "move_y") and @hasField(T, "jump"))) return;
 
     for (0..registry.count) |i| {
         registry.dx.items[i] = registry.move_x.items[i] * move_speed;
